@@ -58,14 +58,14 @@ module Danger
       end
 
       def endpoint
-        puts "Debug alex - @endpoint = " + @endpoint
+        puts "Debug alex - @endpoint = " + @endpoint.to_s
         puts "Debug alex - DANGER_GITLAB_API_BASE_URL = " + @environment["DANGER_GITLAB_API_BASE_URL"]
         puts "Debug alex - CI_API_V4_URL = " + @environment["CI_API_V4_URL"]
         @endpoint ||= @environment["DANGER_GITLAB_API_BASE_URL"] || @environment["CI_API_V4_URL"] || "https://gitlab.com/api/v4"
       end
 
       def host
-        puts "Debug alex - @host = " + @host
+        puts "Debug alex - @host = " + @host.to_s
         puts "Debug alex - DANGER_GITLAB_HOST = " + @environment["DANGER_GITLAB_HOST"]
         @host ||= @environment["DANGER_GITLAB_HOST"] || URI.parse(endpoint).host || "gitlab.com"
       end
