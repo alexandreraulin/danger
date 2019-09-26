@@ -71,10 +71,12 @@ module Danger
       end
 
       def base_commit
+        puts "Debug alex - base_commit"
         @base_commit ||= self.mr_json.diff_refs.base_sha
       end
 
       def mr_comments
+        puts "Debug alex - mr_comments"
         # @raw_comments contains what we got back from the server.
         # @comments contains Comment objects (that have less information)
         @comments ||= begin
@@ -94,10 +96,12 @@ module Danger
       end
 
       def mr_discussions
+        puts "Debug alex - mr_discussions"
         @mr_discussions ||= client.merge_request_discussions(ci_source.repo_slug, ci_source.pull_request_id)
       end
 
       def mr_diff
+        puts "Debug alex - mr_diff"
         @mr_diff ||= begin
           diffs = mr_changes.changes.map do |change|
             diff = change["diff"]
@@ -112,6 +116,7 @@ module Danger
       end
 
       def mr_changed_paths
+        puts "Debug alex - mr_changed_paths"
         @mr_changed_paths ||= begin
           mr_changes
             .changes.map { |change| change["new_path"] }
@@ -121,12 +126,14 @@ module Danger
       end
 
       def mr_changes
+        puts "Debug alex - mr_changes"
         @mr_changes ||= begin
           client.merge_request_changes(ci_source.repo_slug, ci_source.pull_request_id)
         end
       end
 
       def setup_danger_branches
+        puts "Debug alex - setup_danger_branches"
         base_branch = self.mr_json.source_branch
         head_branch = self.mr_json.target_branch
         head_commit = self.scm.head_commit
@@ -144,15 +151,18 @@ module Danger
       end
 
       def fetch_details
+        puts "Debug alex - fetch_details"
         self.mr_json = client.merge_request(ci_source.repo_slug, self.ci_source.pull_request_id)
         self.ignored_violations = ignored_violations_from_pr
       end
 
       def ignored_violations_from_pr
+        puts "Debug alex - ignored_violations_from_pr"
         GetIgnoredViolation.new(self.mr_json.description).call
       end
 
       def supports_inline_comments
+        puts "Debug alex - supports_inline_comments"
         @supports_inline_comments ||= begin
           # If we can't check GitLab's version, we assume we don't support inline comments
           if Gem.loaded_specs["gitlab"].version < FIRST_GITLAB_GEM_WITH_VERSION_CHECK
@@ -166,6 +176,7 @@ module Danger
       end
 
       def update_pull_request!(warnings: [], errors: [], messages: [], markdowns: [], danger_id: "danger", new_comment: false, remove_previous_comments: false)
+        puts "Debug alex - update_pull_request"
         if supports_inline_comments
           update_pull_request_with_inline_comments!(warnings: warnings, errors: errors, messages: messages, markdowns: markdowns, danger_id: danger_id, new_comment: new_comment, remove_previous_comments: remove_previous_comments)
         else
@@ -174,6 +185,7 @@ module Danger
       end
 
       def update_pull_request_with_inline_comments!(warnings: [], errors: [], messages: [], markdowns: [], danger_id: "danger", new_comment: false, remove_previous_comments: false)
+        puts "Debug alex - update_pull_request_with_inline_comments"
         editable_regular_comments = mr_comments
           .select { |comment| comment.generated_by_danger?(danger_id) }
           .reject(&:inline?)
@@ -236,6 +248,7 @@ module Danger
       end
 
       def update_pull_request_without_inline_comments!(warnings: [], errors: [], messages: [], markdowns: [], danger_id: "danger", new_comment: false, remove_previous_comments: false)
+        puts "Debug alex - update_pull_request_without_inline_comments"
         editable_comments = mr_comments.select { |comment| comment.generated_by_danger?(danger_id) }
 
         should_create_new_comment = new_comment || editable_comments.empty? || remove_previous_comments
@@ -276,6 +289,7 @@ module Danger
       end
 
       def delete_old_comments!(except: nil, danger_id: "danger")
+        puts "Debug alex - delete_old_comments"
         @raw_comments.each do |raw_comment|
 
           comment = Comment.from_gitlab(raw_comment)
@@ -301,6 +315,7 @@ module Danger
 
       # @return [String] A URL to the specific file, ready to be downloaded
       def file_url(organisation: nil, repository: nil, branch: nil, path: nil)
+        puts "Debug alex - file_url"
         branch ||= 'master'
         token = @environment["DANGER_GITLAB_API_TOKEN"]
         puts "Debug alex - token = '#{token}'"
@@ -310,6 +325,7 @@ module Danger
       end
 
       def regular_violations_group(warnings: [], errors: [], messages: [], markdowns: [])
+        puts "Debug alex - regular_violations_group"
         {
           warnings: warnings.reject(&:inline?),
           errors: errors.reject(&:inline?),
@@ -319,6 +335,7 @@ module Danger
       end
 
       def inline_violations_group(warnings: [], errors: [], messages: [], markdowns: [])
+        puts "Debug alex - inline_violations_group"
         cmp = proc do |a, b|
           next -1 unless a.file && a.line
           next 1 unless b.file && b.line
@@ -337,12 +354,14 @@ module Danger
       end
 
       def merge_violations(*violation_groups)
+        puts "Debug alex - merge_violations"
         violation_groups.inject({}) do |accumulator, group|
           accumulator.merge(group) { |_, old, fresh| old + fresh }
         end
       end
 
       def submit_inline_comments!(warnings: [], errors: [], messages: [], markdowns: [], previous_violations: [], danger_id: "danger")
+        puts "Debug alex - submit_inline_comments"
         comments = mr_discussions
           .auto_paginate
           .flat_map { |discussion| discussion.notes.map { |note| note.merge({"discussion_id" => discussion.id}) } }
@@ -388,6 +407,7 @@ module Danger
       end
 
       def submit_inline_comments_for_kind!(kind, messages, diff_lines, danger_comments, previous_violations, danger_id: "danger")
+        puts "Debug alex - submit_inline_comments_for_kind"
         previous_violations ||= []
         is_markdown_content = kind == :markdown
         emoji = { warning: "warning", error: "no_entry_sign", message: "book" }[kind]
@@ -467,6 +487,7 @@ module Danger
       end
 
       def find_old_position_in_diff(changes, message)
+        puts "Debug alex - find_old_position_in_diff"
         range_header_regexp = /@@ -(?<old>[0-9]+)(,([0-9]+))? \+(?<new>[0-9]+)(,([0-9]+))? @@.*/
 
         change = changes.find { |c| c["new_path"] == message.file }
